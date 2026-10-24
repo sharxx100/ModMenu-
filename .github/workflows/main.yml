@@ -17,6 +17,15 @@ jobs:
         unzip cpp.zip -d .
         rm cpp.zip
 
+    - name: Auto-Patch payload.cpp Fixes
+      run: |
+        # تصحيح أنواع البيانات
+        sed -i 's/typedef fopen_t (\*fopen_t)/typedef FILE* (*fopen_t)/g' cpp/payload.cpp
+        sed -i 's/typedef read_t (\*read_t)/typedef ssize_t (*read_t)/g' cpp/payload.cpp
+        # تصحيح متغير القائمة
+        sed -i 's/static std::atomic<bool> g_menu_open{true};/static bool g_menu_open = true;/g' cpp/payload.cpp
+        sed -i 's/g_menu_open.load()/g_menu_open/g' cpp/payload.cpp
+
     - name: Setup Android NDK
       uses: nttld/setup-ndk@v1
       id: setup-ndk
