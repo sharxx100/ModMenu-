@@ -12,21 +12,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Unzip cpp folder
-      run: |
-        unzip cpp.zip -d extracted_cpp
-        rm cpp.zip
-
-    - name: Auto-Patch payload.cpp Fixes
-      run: |
-        FILE=$(find extracted_cpp -name "payload.cpp" | head -n 1)
-        if [ -n "$FILE" ]; then
-          sed -i 's/typedef fopen_t (\*fopen_t)/typedef FILE* (*fopen_t)/g' "$FILE"
-          sed -i 's/typedef read_t (\*read_t)/typedef ssize_t (*read_t)/g' "$FILE"
-          sed -i 's/static std::atomic<bool> g_menu_open{true};/static bool g_menu_open = true;/g' "$FILE"
-          sed -i 's/g_menu_open.load()/g_menu_open/g' "$FILE"
-        fi
-
     - name: Setup Android NDK
       uses: nttld/setup-ndk@v1
       id: setup-ndk
@@ -35,9 +20,7 @@ jobs:
 
     - name: Configure CMake
       run: |
-        # بيدور على الفولدر اللي فيه payload.cpp ويبني منه
-        CPP_DIR=$(dirname $(find extracted_cpp -name "payload.cpp" | head -n 1))
-        cd "$CPP_DIR"
+        cd cpp
         cmake -B build \
           -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
           -DANDROID_ABI=arm64-v8a \
@@ -46,12 +29,11 @@ jobs:
 
     - name: Build
       run: |
-        CPP_DIR=$(dirname $(find extracted_cpp -name "payload.cpp" | head -n 1))
-        cd "$CPP_DIR"
+        cd cpp
         cmake --build build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: libmenu
-        path: "**/libmenu.so"
+        path: cpp/build/libmenu.so
