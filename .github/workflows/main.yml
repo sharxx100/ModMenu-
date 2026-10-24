@@ -19,12 +19,13 @@ jobs:
 
     - name: Auto-Patch payload.cpp Fixes
       run: |
-        # تصحيح أنواع البيانات
-        sed -i 's/typedef fopen_t (\*fopen_t)/typedef FILE* (*fopen_t)/g' cpp/payload.cpp
-        sed -i 's/typedef read_t (\*read_t)/typedef ssize_t (*read_t)/g' cpp/payload.cpp
-        # تصحيح متغير القائمة
-        sed -i 's/static std::atomic<bool> g_menu_open{true};/static bool g_menu_open = true;/g' cpp/payload.cpp
-        sed -i 's/g_menu_open.load()/g_menu_open/g' cpp/payload.cpp
+        FILE=$(find . -name "payload.cpp" | head -n 1)
+        if [ -n "$FILE" ]; then
+          sed -i 's/typedef fopen_t (\*fopen_t)/typedef FILE* (*fopen_t)/g' "$FILE"
+          sed -i 's/typedef read_t (\*read_t)/typedef ssize_t (*read_t)/g' "$FILE"
+          sed -i 's/static std::atomic<bool> g_menu_open{true};/static bool g_menu_open = true;/g' "$FILE"
+          sed -i 's/g_menu_open.load()/g_menu_open/g' "$FILE"
+        fi
 
     - name: Setup Android NDK
       uses: nttld/setup-ndk@v1
@@ -34,7 +35,7 @@ jobs:
 
     - name: Configure CMake
       run: |
-        cd cpp
+        if [ -d "cpp" ]; then cd cpp; fi
         cmake -B build \
           -DCMAKE_TOOLCHAIN_FILE=${{ steps.setup-ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
           -DANDROID_ABI=arm64-v8a \
@@ -43,11 +44,13 @@ jobs:
 
     - name: Build
       run: |
-        cd cpp
+        if [ -d "cpp" ]; then cd cpp; fi
         cmake --build build
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: libmenu
-        path: cpp/build/libmenu.so
+        path: |
+          cpp/build/libmenu.so
+          build/libmenu.so
