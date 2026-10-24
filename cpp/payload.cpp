@@ -120,10 +120,9 @@ static void* method_addr(void* klass, const char* name, int argc) {
 // ============================================================
 // Anti-detection
 // ============================================================
-typedef fopen_t (*fopen_t)(const char*, const char*);
-typedef read_t (*read_t)(int, void*, size_t);
+typedef FILE* (*fopen_t)(const char*, const char*);
+typedef ssize_t (*read_t)(int, void*, size_t);
 
-static fopen_t  orig_fopen = nullptr;
 static read_t   orig_read = nullptr;
 
 static const char* kSelfSoName = "libmenu.so";
@@ -201,7 +200,8 @@ static std::atomic<bool> g_esp_on{false};
 static std::atomic<bool> g_aim_on{false};
 static std::atomic<float> g_aim_fov{120.0f};
 static std::atomic<float> g_aim_smooth{8.0f};
-static std::atomic<bool> g_menu_open{true};
+
+static bool g_menu_open = true;
 
 struct GameSyms {
     void* local_player;
@@ -376,7 +376,7 @@ static EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surf) {
     ImGui_ImplAndroid_NewFrame();
     ImGui::NewFrame();
 
-    if (g_menu_open.load()) draw_menu();
+    if (g_menu_open) draw_menu();
     draw_esp();
     run_aimbot();
 
