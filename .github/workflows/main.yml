@@ -1,4 +1,4 @@
-name: Build Native Payload
+name: Build Native Payload and Injector
 
 on:
   push:
@@ -27,13 +27,19 @@ jobs:
           -DANDROID_PLATFORM=android-29 \
           -DCMAKE_BUILD_TYPE=Release
 
-    - name: Build
+    - name: Build Payload (.so)
       run: |
         cd cpp
         cmake --build build
 
-    - name: Upload Artifact
+    - name: Build Injector Executable
+      run: |
+        ${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android29-clang++ -static -O2 injector.cpp -o injector
+
+    - name: Upload All Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: libmenu
-        path: cpp/build/libmenu.so
+        name: ModMenu-Complete
+        path: |
+          cpp/build/libmenu.so
+          injector
